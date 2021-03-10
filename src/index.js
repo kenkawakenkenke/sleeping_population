@@ -1,4 +1,7 @@
 import GeoTIFF from 'geotiff';
+import geoTz from 'geo-tz';
+import moment from "moment-timezone";
+import * as MathUtil from "./common/mathutil.js";
 
 // Make sure you have this file. See README.
 const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
@@ -8,24 +11,41 @@ const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
 
     const width = tiffImage.getWidth();
     const height = tiffImage.getHeight();
+    const [geoWest, geoSouth, geoEast, geoNorth] = tiffImage.getBoundingBox();
 
     const data = await tiffImage.readRasters({ pool: new GeoTIFF.Pool() });
     const [values] = data;
 
-    const populationForX = [];
-    for (let x = 0; x < width; x++) {
-        let sum = 0;
-        for (let y = 0; y < height; y++) {
-            const idx = y * width + x;
+    const populationForTimezone = {};
+    for (let y = 0, idx = 0; y < height; y++) {
+        const lat = Math.floor(MathUtil.map(y, 0, height, geoNorth, geoSouth));
+        for (let x = 0; x < width; x++, idx++) {
             const population = values[idx];
-            if (population > 0) {
-                sum += population;
+            if (population <= 0) {
+                continue;
             }
+            const lng = Math.floor(MathUtil.map(x, 0, width, geoWest, geoEast));
+            const timezone = geoTz(lat, lng);
+            if (timezone.length === 0) {
+                continue;
+            }
+            populationForTimezone[timezone[0]] =
+                (populationForTimezone[timezone[0]] || 0) + population;
         }
-        populationForX.push(sum);
     }
+    console.log(populationForTimezone);
 
-    const totalPopulation = populationForX.reduce((accum, c) => accum + c, 0);
+    const populationForUtcOffset = {};
+    Object.entries(populationForTimezone)
+        .forEach(([timezone, population]) => {
+            const utcOffset = moment.tz(timezone).utcOffset();
+            populationForUtcOffset[utcOffset] =
+                (populationForUtcOffset[utcOffset] || 0) + population;
+        });
+    console.log(populationForUtcOffset);
+
+    const totalPopulation =
+        Object.values(populationForUtcOffset).reduce((accum, c) => accum + c, 0);
     function hourOffset(utcHour, utcOffset) {
         let hour = utcHour + utcOffset;
         while (hour >= 24) hour -= 24;
@@ -38,17 +58,15 @@ const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
     console.log("UTC hour", "JST hour", "Num people asleep", "% of people asleep");
     for (let utcHour = 0; utcHour < 24; utcHour++) {
         let numPopulationAsleep = 0;
-        populationForX.forEach((v, i) => {
-            const longitude = i / populationForX.length * 360 - 180;
-            // Crude approximation: we assume longitude maps linearly to the UTC offset.
-            const utcOffset = longitude * 24 / 360;
-            let hourAtLongitude = hourOffset(utcHour, utcOffset);
-            // Crude approximation: we assume people sleep between 22:00 and 6:00.
-            const isAsleep = hourAtLongitude >= 22 || hourAtLongitude < 6;
-            if (isAsleep) {
-                numPopulationAsleep += v;
-            }
-        });
+        Object.entries(populationForUtcOffset)
+            .forEach(([utcOffset, v]) => {
+                let hourAtLongitude = hourOffset(utcHour, utcOffset / 60);
+                // Crude approximation: we assume people sleep between 22:00 and 6:00.
+                const isAsleep = hourAtLongitude >= 22 || hourAtLongitude < 6;
+                if (isAsleep) {
+                    numPopulationAsleep += v;
+                }
+            });
         const jstHour = hourOffset(utcHour, 9);
         console.log(formatHour(utcHour), formatHour(jstHour), numPopulationAsleep, numPopulationAsleep / totalPopulation);
     }
