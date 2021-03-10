@@ -1,5 +1,6 @@
 import GeoTIFF from 'geotiff';
 
+// Make sure you have this file. See README.
 const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
 
 (async () => {
@@ -7,7 +8,6 @@ const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
 
     const width = tiffImage.getWidth();
     const height = tiffImage.getHeight();
-    console.log(width, height);
 
     const data = await tiffImage.readRasters({ pool: new GeoTIFF.Pool() });
     const [values] = data;
@@ -22,7 +22,6 @@ const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
                 sum += population;
             }
         }
-        console.log(x, sum);
         populationForX.push(sum);
     }
 
@@ -40,8 +39,10 @@ const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
         let numPopulationAsleep = 0;
         populationForX.forEach((v, i) => {
             const longitude = i / populationForX.length * 360 - 180;
+            // Crude approximation: we assume longitude maps linearly to the UTC offset.
             const utcOffset = longitude * 24 / 360;
             let hourAtLongitude = hourOffset(utcHour, utcOffset);
+            // Crude approximation: we assume people sleep between 22:00 and 6:00.
             const isAsleep = hourAtLongitude >= 22 || hourAtLongitude < 6;
             if (isAsleep) {
                 numPopulationAsleep += v;
