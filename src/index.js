@@ -35,6 +35,7 @@ const gpwTifFile = "./data/gpw-v4-population-count_2020.tif";
     function formatHour(hour) {
         return `${hour.toString().padStart(2)}:00`;
     }
+    console.log("UTC hour", "JST hour", "Num people asleep", "% of people asleep");
     for (let utcHour = 0; utcHour < 24; utcHour++) {
         let numPopulationAsleep = 0;
         populationForX.forEach((v, i) => {
