@@ -1,0 +1,23 @@
+{
+  "name": "sleeping_population",
+  "version": "1.0.0",
+  "description": "Script to estimate the % of the population of the world sleeping at any one time",
+  "main": "index.js",
+  "type":"module",
+  "scripts": {
+    "main": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kenkawakenkenke/sleeping_population.git"
+  },
+  "author": "Ken Kawamoto <ken@kawamoto.co.uk> (http://kawamoto.co.uk/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kenkawakenkenke/sleeping_population/issues"
+  },
+  "homepage": "https://github.com/kenkawakenkenke/sleeping_population#readme",
+  "dependencies": {
+    "geotiff": "^1.0.0-beta.16"
+  }
+}
