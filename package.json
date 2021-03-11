@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Script to estimate the % of the population of the world sleeping at any one time",
   "main": "index.js",
-  "type":"module",
+  "type": "module",
   "scripts": {
     "main": "node src/index.js"
   },
@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/kenkawakenkenke/sleeping_population#readme",
   "dependencies": {
-    "geotiff": "^1.0.0-beta.16"
+    "geo-tz": "^6.0.1",
+    "geotiff": "^1.0.0-beta.16",
+    "moment-timezone": "^0.5.33"
   }
 }
